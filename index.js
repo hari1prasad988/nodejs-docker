@@ -1,7 +1,41 @@
-var http = require('http');
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
 
-//create a server object:
-http.createServer(function (req, res) {
-  res.write('** Hey my app was deployed :) **'); //write a response to the client
-  res.end(); //end the response
-}).listen(80); //the server object listens on port 80
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+const flightRoutes = require("./routes/flightRoutes");
+const bookingRoutes = require("./routes/bookingRoutes");
+
+app.use("/api/flights", flightRoutes);
+app.use("/api/bookings", bookingRoutes);
+
+// Health check
+app.get("/", (req, res) => {
+    res.json({
+        message: "Flight Booking API is running"
+    });
+});
+
+// MongoDB connection
+mongoose
+    .connect(process.env.MONGO_URI)
+    .then(() => {
+        console.log("MongoDB connected");
+
+        const PORT = process.env.PORT || 5000;
+
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((error) => {
+        console.error("MongoDB connection failed:", error);
+    });
